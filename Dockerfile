@@ -27,7 +27,17 @@ RUN echo "date.timezone = America/Sao_Paulo" > /etc/php/7.0/apache2/conf.d/siste
 && echo "display_errors = On" >> /etc/php/7.0/apache2/conf.d/sistemas.ini \
 && echo "error_reporting = E_ALL & ~E_DEPRECATED & ~E_NOTICE" >> /etc/php/7.0/apache2/conf.d/sistemas.ini
 
-WORKDIR /var/www/html
-ADD . /var/www/html
+# config oracle
+RUN apt install unzip libaio-dev -y && mkdir /opt/oracle
+RUN wget https://download.oracle.com/otn_software/linux/instantclient/19600/instantclient-basic-linux.x64-19.6.0.0.0dbru.zip -P /opt/oracle \
+&& wget https://download.oracle.com/otn_software/linux/instantclient/19600/instantclient-sdk-linux.x64-19.6.0.0.0dbru.zip -P /opt/oracle
+RUN unzip /opt/oracle/instantclient-basic-linux.x64-19.6.0.0.0dbru.zip -d /opt/oracle \
+&& unzip /opt/oracle/instantclient-sdk-linux.x64-19.6.0.0.0dbru.zip -d /opt/oracle
+RUN echo 'instantclient,/opt/oracle/instantclient_19_6' | pecl install oci8
+RUN echo "extension=oci8.so" > /etc/php/7.0/apache2/conf.d/oci8.ini
+# echo "extension=oci8.so" > /etc/php/7.0/cli/conf.d/oci8.ini
+RUN echo "/opt/oracle/instantclient_19_6" > /etc/ld.so.conf.d/oracle-instantclient.conf && ldconfig
 
-EXPOSE 80
+# config log
+RUN ln -sf /dev/stdout /var/log/apache2/access.log \
+&& ln -sf /dev/stderr /var/log/apache2/error.log
